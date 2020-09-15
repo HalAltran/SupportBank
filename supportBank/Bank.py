@@ -1,3 +1,5 @@
+import re
+
 from decimal import Decimal
 from supportBank import CSVData
 from supportBank.Account import Account
@@ -35,3 +37,12 @@ class Bank:
 
     def list_account(self, name: str):
         print(self.accounts[name].list_account())
+
+    def do_user_command(self, command: str):
+        if command == "List All":
+            self.list_all()
+        if re.match(r"List \[[a-z A-Z]+\]", command):
+            command = re.sub(r"List \[", "", command)
+            name = re.sub(r"\]", "", command)
+            if self.accounts.__contains__(name):
+                self.list_account(name)
