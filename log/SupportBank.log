@@ -1,0 +1,7 @@
+WARNING:root:Row: 28 contains an invalid decimal and could not be parsed.
+WARNING:root:Row: 52 contains a date error and could not be parsed. Dates must be in the format dd/mm/yyyy.
+INFO:root:Bank has parsed CSV Data. 2 rows were rejected.
+INFO:root:User performed the following command: "List All"
+INFO:root:User performed the following command: "List [Stephen S]"
+INFO:root:User performed the following command: "end"
+INFO:root:Bank has closed for the day.
