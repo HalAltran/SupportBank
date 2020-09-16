@@ -5,6 +5,7 @@ from decimal import Decimal
 from supportBank import CSVData
 from supportBank.Account import Account
 from supportBank.Transaction import Transaction
+from datetime import datetime
 
 
 class Bank:
@@ -15,65 +16,55 @@ class Bank:
         self.error_count = 0
 
     def parse_csv_data(self, csv_data: CSVData):
-        name_set = set()
+        logging.info("Bank is parsing CSV Data from: \"%s\"." % csv_data.file_path)
+        # name_set = set()
+        # for row in csv_data.rows:
+        #     name_set.add(row.get_entry("From"))
+        #     name_set.add(row.get_entry("To"))
+        # for name in name_set:
+        #     self.accounts[name] = Account(name)
         for row in csv_data.rows:
-            name_set.add(row.get_entry("From"))
-            name_set.add(row.get_entry("To"))
-        for name in name_set:
-            self.accounts[name] = Account(name)
+            # if not self.accounts.contains(row."From")
+            self.create_account_if_name_does_not_exist(row.get_entry("From"))
+            self.create_account_if_name_does_not_exist(row.get_entry("To"))
         row_count = 2
         self.error_count = 0
         for row in csv_data.rows:
-            self.create_transaction_from_row(row, row_count)
+            self.create_transaction_from_row(row, row_count, csv_data.headers)
             row_count += 1
-        logging.info("Bank has parsed CSV Data. " + str(self.error_count) + " rows were rejected.")
+        logging.info("Bank has parsed CSV Data from: \"%s\". %d rows were rejected." % (csv_data.file_path,
+                                                                                        self.error_count))
 
-    def create_transaction_from_row(self, row, row_count):
-        try:
-            date = row.get_entry("Date")
-            if not re.match(r"[\d]{2}/[\d]{2}/[\d]{4}", date):
-                logging.warning("Row: " + str(row_count) + " contains a date error and could not be parsed. Dates must "
-                                                           "be in the format dd/mm/yyyy.")
+    def create_account_if_name_does_not_exist(self, name):
+        if not self.accounts.__contains__(name):
+            self.accounts[name] = Account(name)
+
+    def create_transaction_from_row(self, row, row_count, headers):
+        transaction_params = {}
+        for header in headers:
+            try:
+                param = row.get_entry(header)
+                if header == "Date":
+                    param = datetime.strptime(param, "%d/%m/%Y")
+                elif header == "Amount":
+                    param = Decimal(param)
+                transaction_params[header] = param
+            except:
+                logging.warning("Row: %d contains an invalid \"%s\" and could not be parsed." % (row_count, header))
                 self.error_count += 1
                 return
-        except:
-            logging.warning("Row: " + str(row_count) + " contains a date error and could not be parsed. Dates must "
-                                                       "be in the format dd/mm/yyyy.")
-            self.error_count += 1
-            return
-        try:
-            account_from = row.get_entry("From")
-        except:
-            logging.warning("Row: " + str(row_count) + " contains an error with the \"From\" column and could not be "
-                                                       "parsed.")
-            self.error_count += 1
-            return
-        try:
-            account_to = row.get_entry("To")
-        except:
-            logging.warning("Row: " + str(row_count) + " contains an error with the \"To\" column and could not be "
-                                                       "parsed.")
-            self.error_count += 1
-            return
-        try:
-            narrative = row.get_entry("Narrative")
-        except:
-            logging.warning("Row: " + str(row_count) + " contains an error with the \"Narrative\" column and could not "
-                                                       "be parsed.")
-            self.error_count += 1
-            return
-        try:
-            amount = Decimal(row.get_entry("Amount"))
-        except:
-            logging.warning("Row: " + str(row_count) + " contains an invalid decimal and could not be parsed.")
-            self.error_count += 1
-            return
-        self.create_transaction(date, account_from, account_to, narrative, amount)
+
+        account_from = self.accounts[transaction_params["From"]]
+        account_to = self.accounts[transaction_params["To"]]
+        transaction = Transaction(transaction_params["Date"], account_from, account_to,
+                                  transaction_params["Narrative"], transaction_params["Amount"])
+        account_from.add_transaction_from(transaction)
+        account_to.add_transaction_to(transaction)
 
     def add_account(self, account: Account):
         self.accounts[account.name] = {account}
 
-    def create_transaction(self, date: str, name_from: str, name_to: str, narrative: str, amount: Decimal):
+    def create_transaction(self, date: datetime, name_from: str, name_to: str, narrative: str, amount: Decimal):
         account_from = self.accounts[name_from]
         account_to = self.accounts[name_to]
         transaction = Transaction(date, account_from, account_to, narrative, amount)
@@ -88,14 +79,24 @@ class Bank:
         print(self.accounts[name].list_account())
 
     def do_user_command(self, command: str):
-        logging.info("User performed the following command: \"" + command + "\"")
         if command == "List All":
             self.list_all()
         elif re.match(r"List \[[a-z A-Z]+\]", command):
-            command = re.sub(r"List \[", "", command)
-            name = re.sub(r"\]", "", command)
+            name = re.sub(r"List \[", "", command)
+            name = re.sub(r"\]", "", name)
             if self.accounts.__contains__(name):
                 self.list_account(name)
+            else:
+                logging.info("User attempted to list information for account: \"%s\" which does not exist" % name)
+                print("Bank account for \"%s\" does not exist. Please enter a new command." % name)
         elif command == "end":
             self.bank_open = False
-            logging.info("Bank has closed for the day.")
+        else:
+            logging.warning("User attempted to perform command: \"%s\" which is not valid." % command)
+            print("Please enter a valid command such as: \"List All\"; \"List [Account]\"; \"end\".")
+            return
+        logging.info("User performed the following command: \"%s\"" % command)
+
+    @staticmethod
+    def log_info(text_to_log):
+        logging.info(text_to_log)
