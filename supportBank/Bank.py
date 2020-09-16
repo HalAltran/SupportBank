@@ -1,11 +1,9 @@
 import re
 import logging
 
-from decimal import Decimal
-from supportBank import CSVData
+from supportBank.DataImport import DataImport
 from supportBank.Account import Account
 from supportBank.Transaction import Transaction
-from datetime import datetime
 
 
 class Bank:
@@ -13,63 +11,29 @@ class Bank:
         self.accounts = {}
         self.bank_open = True
         logging.basicConfig(filename='../log/SupportBank.log', filemode='w', level=logging.DEBUG)
-        self.error_count = 0
 
-    def parse_csv_data(self, csv_data: CSVData):
-        logging.info("Bank is parsing CSV Data from: \"%s\"." % csv_data.file_path)
-        # name_set = set()
-        # for row in csv_data.rows:
-        #     name_set.add(row.get_entry("From"))
-        #     name_set.add(row.get_entry("To"))
-        # for name in name_set:
-        #     self.accounts[name] = Account(name)
-        for row in csv_data.rows:
-            # if not self.accounts.contains(row."From")
-            self.create_account_if_name_does_not_exist(row.get_entry("From"))
-            self.create_account_if_name_does_not_exist(row.get_entry("To"))
+    def import_data(self, data: DataImport):
+        for row in data.rows:
+            self.create_account_if_name_does_not_exist(row["From"])
+            self.create_account_if_name_does_not_exist(row["To"])
         row_count = 2
-        self.error_count = 0
-        for row in csv_data.rows:
-            self.create_transaction_from_row(row, row_count, csv_data.headers)
+        for row in data.rows:
+            self.create_transaction(row)
             row_count += 1
-        logging.info("Bank has parsed CSV Data from: \"%s\". %d rows were rejected." % (csv_data.file_path,
-                                                                                        self.error_count))
 
     def create_account_if_name_does_not_exist(self, name):
         if not self.accounts.__contains__(name):
             self.accounts[name] = Account(name)
 
-    def create_transaction_from_row(self, row, row_count, headers):
-        transaction_params = {}
-        for header in headers:
-            try:
-                param = row.get_entry(header)
-                if header == "Date":
-                    param = datetime.strptime(param, "%d/%m/%Y")
-                elif header == "Amount":
-                    param = Decimal(param)
-                transaction_params[header] = param
-            except:
-                logging.warning("Row: %d contains an invalid \"%s\" and could not be parsed." % (row_count, header))
-                self.error_count += 1
-                return
-
-        account_from = self.accounts[transaction_params["From"]]
-        account_to = self.accounts[transaction_params["To"]]
-        transaction = Transaction(transaction_params["Date"], account_from, account_to,
-                                  transaction_params["Narrative"], transaction_params["Amount"])
+    def create_transaction(self, row):
+        account_from = self.accounts[row["From"]]
+        account_to = self.accounts[row["To"]]
+        transaction = Transaction(row["Date"], account_from, account_to, row["Narrative"], row["Amount"])
         account_from.add_transaction_from(transaction)
         account_to.add_transaction_to(transaction)
 
     def add_account(self, account: Account):
         self.accounts[account.name] = {account}
-
-    def create_transaction(self, date: datetime, name_from: str, name_to: str, narrative: str, amount: Decimal):
-        account_from = self.accounts[name_from]
-        account_to = self.accounts[name_to]
-        transaction = Transaction(date, account_from, account_to, narrative, amount)
-        account_from.add_transaction_from(transaction)
-        account_to.add_transaction_to(transaction)
 
     def list_all(self):
         for name, account in self.accounts.items():
@@ -91,6 +55,18 @@ class Bank:
                 print("Bank account for \"%s\" does not exist. Please enter a new command." % name)
         elif command == "end":
             self.bank_open = False
+        elif re.match(r"Import File \[[\S]+\]", command):
+            file_path = re.sub(r"Import File \[", "", command)
+            file_path = re.sub(r"\]", "", file_path)
+            logging.info("Importing data from %s" % file_path)
+            try:
+                self.import_data(DataImport(file_path))
+            except:
+                logging.warning("Could not import data from %s" % file_path)
+                print("Could not import data from %s" % file_path)
+                return
+            logging.info("Importing data from %s" % file_path)
+            print("Data imported successfully.")
         else:
             logging.warning("User attempted to perform command: \"%s\" which is not valid." % command)
             print("Please enter a valid command such as: \"List All\"; \"List [Account]\"; \"end\".")
