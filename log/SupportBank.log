@@ -8,6 +8,3 @@ INFO:root:Bank is parsing .json Data from: "../res/Transactions2013.json".
 INFO:root:Bank has parsed .json Data from: "../res/Transactions2013.json". 0 rows were rejected.
 INFO:root:Bank is parsing .xml Data from: "../res/Transactions2012.xml".
 INFO:root:Bank has parsed .xml Data from: "../res/Transactions2012.xml". 0 rows were rejected.
-INFO:root:User performed the following command: "List [Gergana I]"
-INFO:root:User performed the following command: "end"
-INFO:root:Bank has closed for the day.

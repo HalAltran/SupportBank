@@ -46,7 +46,7 @@ class DataImport:
         for entry in row:
             entry_header = self.headers[entry_count]
             try:
-                if entry_header == "Date":
+                if entry_header == "Date" and not isinstance(entry, datetime):
                     entry = datetime.strptime(entry, date_format)
                 elif entry_header == "Amount":
                     entry = Decimal(entry)
@@ -99,6 +99,5 @@ class DataImport:
 
     @staticmethod
     def format_xml_date(xml_date):
-        base_date = datetime.strptime("01/01/1990", "%d/%m/%Y")
-        adjusted_date = base_date + timedelta(days=int(xml_date))
-        return datetime.strftime(adjusted_date, "%d/%m/%Y")
+        base_date = datetime.strptime("01/01/1900", "%d/%m/%Y")
+        return base_date + timedelta(days=int(xml_date))

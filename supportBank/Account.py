@@ -22,3 +22,6 @@ class Account:
         print(self.name + " transactions:")
         for transaction in self.transactions:
             print(transaction.list_info())
+
+    def sort_transactions(self):
+        self.transactions.sort(key=lambda transaction: transaction.date)

@@ -1,5 +1,6 @@
 import re
 import logging
+import csv
 
 from supportBank.DataImport import DataImport
 from supportBank.Account import Account
@@ -20,6 +21,7 @@ class Bank:
         for row in data.rows:
             self.create_transaction(row)
             row_count += 1
+        self.sort_transactions()
 
     def create_account_if_name_does_not_exist(self, name):
         if not self.accounts.__contains__(name):
@@ -41,6 +43,16 @@ class Bank:
 
     def list_account(self, name: str):
         print(self.accounts[name].list_account())
+
+    def sort_transactions(self):
+        for account in self.accounts.values():
+            account.sort_transactions()
+
+    def get_all_transactions(self):
+        transactions = set()
+        for account in self.accounts.values():
+            transactions.update(account.transactions)
+        return sorted(transactions, key=lambda transaction: transaction.date)
 
     def do_user_command(self, command: str):
         if command == "List All":
@@ -67,11 +79,24 @@ class Bank:
                 return
             logging.info("Importing data from %s" % file_path)
             print("Data imported successfully.")
+        elif re.match(r"Export File \[[\S]+\]", command):
+            self.write_to_file()
         else:
             logging.warning("User attempted to perform command: \"%s\" which is not valid." % command)
             print("Please enter a valid command such as: \"List All\"; \"List [Account]\"; \"end\".")
             return
         logging.info("User performed the following command: \"%s\"" % command)
+
+    def write_to_file(self):
+        transactions = self.get_all_transactions()
+        try:
+            with open("../output/transactions.csv", "w", newline='') as output_file:
+                writer = csv.writer(output_file, delimiter=',')
+                writer.writerow(["Date", "From", "To", "Narrative", "Amount"])
+                for transaction in transactions:
+                    writer.writerow(transaction.list_values())
+        except:
+            print("fail")
 
     @staticmethod
     def log_info(text_to_log):
