@@ -1,9 +1,13 @@
-INFO:root:User performed the following command: "List All"
-INFO:root:Importing data from ../res/Transactions2013.json
+INFO:root:Bank is parsing .csv Data from: "../res/Transactions2014.csv".
+INFO:root:Bank has parsed .csv Data from: "../res/Transactions2014.csv". 0 rows were rejected.
+INFO:root:Bank is parsing .csv Data from: "../res/DodgyTransactions2015.csv".
+WARNING:root:Row: 27 contains an invalid "Amount" and could not be parsed.
+WARNING:root:Row: 51 contains an invalid "Date" and could not be parsed.
+INFO:root:Bank has parsed .csv Data from: "../res/DodgyTransactions2015.csv". 2 rows were rejected.
 INFO:root:Bank is parsing .json Data from: "../res/Transactions2013.json".
 INFO:root:Bank has parsed .json Data from: "../res/Transactions2013.json". 0 rows were rejected.
-INFO:root:Importing data from ../res/Transactions2013.json
-INFO:root:User performed the following command: "Import File [../res/Transactions2013.json]"
-INFO:root:User performed the following command: "List All"
+INFO:root:Bank is parsing .xml Data from: "../res/Transactions2012.xml".
+INFO:root:Bank has parsed .xml Data from: "../res/Transactions2012.xml". 0 rows were rejected.
+INFO:root:User performed the following command: "List [Gergana I]"
 INFO:root:User performed the following command: "end"
 INFO:root:Bank has closed for the day.

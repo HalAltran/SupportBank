@@ -2,7 +2,9 @@ import csv
 import logging
 import json
 import os
+import xml.etree.ElementTree as xml
 
+from datetime import timedelta
 from datetime import datetime
 from decimal import Decimal
 
@@ -18,6 +20,8 @@ class DataImport:
         logging.info("Bank is parsing %s Data from: \"%s\"." % (self.file_ext, self.file_path))
         if self.file_ext == ".csv":
             self.parse_csv()
+        elif self.file_ext == ".xml":
+            self.parse_xml()
         else:
             self.parse_json()
         logging.info("Bank has parsed %s Data from: \"%s\". %d rows were rejected." % (self.file_ext, self.file_path,
@@ -70,3 +74,31 @@ class DataImport:
                 self.create_row([row["date"], row["fromAccount"], row["toAccount"], row["narrative"], row["amount"]],
                                 row_count, "%Y-%m-%d")
                 row_count += 1
+
+    def parse_xml(self):
+        xml_tree = xml.parse(self.file_path)
+        transaction_list = xml_tree.getroot()
+        self.headers = {0: "Date", 1: "From", 2: "To", 3: "Narrative", 4: "Amount"}
+        row_count = 0
+        for support_transaction in transaction_list:
+            row_dict = {"Date": self.format_xml_date(support_transaction.attrib["Date"])}
+            for attribute in support_transaction:
+                if attribute.tag == "Description":
+                    row_dict["Narrative"] = attribute.text
+                elif attribute.tag == "Value":
+                    row_dict["Amount"] = attribute.text
+                elif attribute.tag == "Parties":
+                    for member in attribute:
+                        row_dict[member.tag] = member.text
+            row_list = []
+            for header in self.headers.values():
+                row_list.append(row_dict[header])
+
+            self.create_row(row_list, row_count, "%d/%m/%Y")
+            row_count += 1
+
+    @staticmethod
+    def format_xml_date(xml_date):
+        base_date = datetime.strptime("01/01/1990", "%d/%m/%Y")
+        adjusted_date = base_date + timedelta(days=int(xml_date))
+        return datetime.strftime(adjusted_date, "%d/%m/%Y")
