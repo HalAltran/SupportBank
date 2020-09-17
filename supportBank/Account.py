@@ -18,10 +18,10 @@ class Account:
     def list_all_format(self):
         return "Name: " + self.name + ". Balance: " + str(self.balance)
 
-    def list_account(self):
+    def print_account_transactions(self):
         print(self.name + " transactions:")
         for transaction in self.transactions:
-            print(transaction.list_info())
+            transaction.print_info()
 
     def sort_transactions(self):
         self.transactions.sort(key=lambda transaction: transaction.date)

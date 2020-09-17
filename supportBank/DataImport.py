@@ -2,45 +2,43 @@ import csv
 import logging
 import json
 import os
-import xml.etree.ElementTree as xml
 
 from datetime import timedelta
 from datetime import datetime
 from decimal import Decimal
+from xml.etree import ElementTree
 
 
 class DataImport:
     def __init__(self, file_path: str):
         self.file_path = file_path
         self.rows = []
-        self.headers = {}
+        self.headers = {0: "Date", 1: "From", 2: "To", 3: "Narrative", 4: "Amount"}
         self.error_count = 0
         logging.basicConfig(filename='../log/SupportBank.log', filemode='w', level=logging.DEBUG)
         self.file_ext = os.path.splitext(file_path)[1]
+        self.parse_data()
+
+    def parse_data(self):
         logging.info("Bank is parsing %s Data from: \"%s\"." % (self.file_ext, self.file_path))
-        if self.file_ext == ".csv":
-            self.parse_csv()
-        elif self.file_ext == ".xml":
-            self.parse_xml()
-        else:
-            self.parse_json()
+        extension_to_parsing_command_map = {".csv": self.parse_csv, ".xml": self.parse_xml, ".json": self.parse_json}
+        extension_to_parsing_command_map[self.file_ext]
+        parse_function = extension_to_parsing_command_map.get(self.file_ext)
+        parse_function()
         logging.info("Bank has parsed %s Data from: \"%s\". %d rows were rejected." % (self.file_ext, self.file_path,
                                                                                        self.error_count))
 
     def parse_csv(self):
         with open(self.file_path) as csv_file:
-            row_count = 0
-            first_row = True
+            csv_reader = csv.reader(csv_file, delimiter=",")
+            next(csv_reader)
+            row_count = 1
             self.error_count = 0
-            for row in csv.reader(csv_file, delimiter=","):
-                if first_row:
-                    self.populate_headers(row)
-                    first_row = False
-                else:
-                    self.create_row(row, row_count, "%d/%m/%Y")
+            for row in csv_reader:
+                self.create_row(row, row_count, "%d/%m/%Y")
                 row_count += 1
 
-    def create_row(self, row, row_count, date_format: str):
+    def create_row(self, row, row_count, date_format):
         data_row = {}
         entry_count = 0
         for entry in row:
@@ -59,43 +57,44 @@ class DataImport:
                 return
         self.rows.append(data_row)
 
-    def populate_headers(self, header_row):
-        count = 0
-        for entry in header_row:
-            self.headers[count] = entry
-            count += 1
-
     def parse_json(self):
         with open(self.file_path) as json_file:
             json_data = json.load(json_file)
-            self.headers = {0: "Date", 1: "From", 2: "To", 3: "Narrative", 4: "Amount"}
+            self.error_count = 0
             row_count = 0
             for row in json_data:
-                self.create_row([row["date"], row["fromAccount"], row["toAccount"], row["narrative"], row["amount"]],
+                self.create_row([row["date"], row["fromAccount"], row["toAccount"], row["narrative"], str(row["amount"])],
                                 row_count, "%Y-%m-%d")
                 row_count += 1
 
     def parse_xml(self):
-        xml_tree = xml.parse(self.file_path)
+        xml_tree = ElementTree.parse(self.file_path)
         transaction_list = xml_tree.getroot()
-        self.headers = {0: "Date", 1: "From", 2: "To", 3: "Narrative", 4: "Amount"}
+        self.error_count = 0
         row_count = 0
         for support_transaction in transaction_list:
-            row_dict = {"Date": self.format_xml_date(support_transaction.attrib["Date"])}
-            for attribute in support_transaction:
-                if attribute.tag == "Description":
-                    row_dict["Narrative"] = attribute.text
-                elif attribute.tag == "Value":
-                    row_dict["Amount"] = attribute.text
-                elif attribute.tag == "Parties":
-                    for member in attribute:
-                        row_dict[member.tag] = member.text
-            row_list = []
-            for header in self.headers.values():
-                row_list.append(row_dict[header])
-
+            row_dict = self.get_xml_transaction_dict(support_transaction)
+            row_list = self.get_row_list_from_row_dict(row_dict)
             self.create_row(row_list, row_count, "%d/%m/%Y")
             row_count += 1
+
+    def get_xml_transaction_dict(self, support_transaction):
+        transaction_dict = {"Date": self.format_xml_date(support_transaction.attrib["Date"])}
+        for attribute in support_transaction:
+            if attribute.tag == "Description":
+                transaction_dict["Narrative"] = attribute.text
+            elif attribute.tag == "Value":
+                transaction_dict["Amount"] = attribute.text
+            elif attribute.tag == "Parties":
+                for member in attribute:
+                    transaction_dict[member.tag] = member.text
+        return transaction_dict
+
+    def get_row_list_from_row_dict(self, row_dict):
+        row_list = []
+        for header in self.headers.values():
+            row_list.append(row_dict[header])
+        return row_list
 
     @staticmethod
     def format_xml_date(xml_date):

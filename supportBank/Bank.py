@@ -13,6 +13,15 @@ class Bank:
         self.bank_open = True
         logging.basicConfig(filename='../log/SupportBank.log', filemode='w', level=logging.DEBUG)
 
+    def run(self):
+        self.import_data(DataImport("../res/Transactions2014.csv"))
+        self.import_data(DataImport("../res/DodgyTransactions2015.csv"))
+        self.import_data(DataImport("../res/Transactions2013.json"))
+        self.import_data(DataImport("../res/Transactions2012.xml"))
+        while self.bank_open:
+            user_command = input("Type command: ")
+            self.do_user_command(user_command)
+
     def import_data(self, data: DataImport):
         for row in data.rows:
             self.create_account_if_name_does_not_exist(row["From"])
@@ -41,9 +50,6 @@ class Bank:
         for name, account in self.accounts.items():
             print(account.list_all_format())
 
-    def list_account(self, name: str):
-        print(self.accounts[name].list_account())
-
     def sort_transactions(self):
         for account in self.accounts.values():
             account.sort_transactions()
@@ -55,49 +61,79 @@ class Bank:
         return sorted(transactions, key=lambda transaction: transaction.date)
 
     def do_user_command(self, command: str):
+        logging.info("User performed the following command: \"%s\"" % command)
         if command == "List All":
             self.list_all()
-        elif re.match(r"List \[[a-z A-Z]+\]", command):
-            name = re.sub(r"List \[", "", command)
-            name = re.sub(r"\]", "", name)
-            if self.accounts.__contains__(name):
-                self.list_account(name)
-            else:
-                logging.info("User attempted to list information for account: \"%s\" which does not exist" % name)
-                print("Bank account for \"%s\" does not exist. Please enter a new command." % name)
+        elif self.is_list_account_command(command):
+            self.list_account(command)
+        elif self.is_import_command(command):
+            self.import_file(command)
+        elif self.is_export_command(command):
+            self.write_to_file(command)
         elif command == "end":
-            self.bank_open = False
-        elif re.match(r"Import File \[[\S]+\]", command):
-            file_path = re.sub(r"Import File \[", "", command)
-            file_path = re.sub(r"\]", "", file_path)
-            logging.info("Importing data from %s" % file_path)
-            try:
-                self.import_data(DataImport(file_path))
-            except:
-                logging.warning("Could not import data from %s" % file_path)
-                print("Could not import data from %s" % file_path)
-                return
-            logging.info("Importing data from %s" % file_path)
-            print("Data imported successfully.")
-        elif re.match(r"Export File \[[\S]+\]", command):
-            self.write_to_file()
+            self.close_bank()
         else:
-            logging.warning("User attempted to perform command: \"%s\" which is not valid." % command)
-            print("Please enter a valid command such as: \"List All\"; \"List [Account]\"; \"end\".")
+            self.log_invalid_command(command)
             return
-        logging.info("User performed the following command: \"%s\"" % command)
 
-    def write_to_file(self):
+    @staticmethod
+    def is_list_account_command(command):
+        return re.match(r"List \[[a-z A-Z]+\]", command)
+
+    @staticmethod
+    def is_import_command(command):
+        return re.match(r"Import File \[[\S]+\]", command)
+
+    @staticmethod
+    def is_export_command(command):
+        return re.match(r"Export File \[[\S]+\]", command)
+
+    def list_account(self, command):
+        name = re.sub(r"List \[", "", command)
+        name = re.sub(r"\]", "", name)
+        if self.accounts.__contains__(name):
+            self.accounts[name].print_account_transactions()
+        else:
+            logging.info("User attempted to list information for account: \"%s\" which does not exist" % name)
+            print("Bank account for \"%s\" does not exist. Please enter a new command." % name)
+
+    def import_file(self, command):
+        file_path = re.sub(r"Import File \[", "", command)
+        file_path = re.sub(r"\]", "", file_path)
+        logging.info("Importing data from \"%s\"" % file_path)
+        try:
+            self.import_data(DataImport(file_path))
+        except:
+            logging.warning("Could not import data from \"%s\"" % file_path)
+            print("Could not import data from \"%s\"" % file_path)
+            return
+        logging.info("Data imported from \"%s\" successfully." % file_path)
+        print("Data imported successfully.")
+
+    def write_to_file(self, command):
+        file_path = re.sub(r"Export File \[", "", command)
+        file_path = "../output/" + re.sub(r"\]", "", file_path)
+        logging.info("Exporting data to \"%s\"" % file_path)
         transactions = self.get_all_transactions()
         try:
-            with open("../output/transactions.csv", "w", newline='') as output_file:
+            with open(file_path, "w", newline='') as output_file:
                 writer = csv.writer(output_file, delimiter=',')
                 writer.writerow(["Date", "From", "To", "Narrative", "Amount"])
                 for transaction in transactions:
                     writer.writerow(transaction.list_values())
         except:
-            print("fail")
+            logging.warning("Could not export data to \"%s\"" % file_path)
+            print("Could not export data to \"%s\"" % file_path)
+            return
+        logging.info("Data exported to \"%s\" successfully." % file_path)
+        print("Data exported successfully.")
 
     @staticmethod
-    def log_info(text_to_log):
-        logging.info(text_to_log)
+    def log_invalid_command(command):
+        logging.warning("User attempted to perform command: \"%s\" which is not valid." % command)
+        print("Please enter a valid command such as: \"List All\"; \"List [Account]\"; \"Import File [path]\"; "
+              "\"Export File [path]\"; \"end\".")
+
+    def close_bank(self):
+        self.bank_open = False
+        logging.info("Bank has closed for the day.")
