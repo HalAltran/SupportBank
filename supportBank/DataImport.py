@@ -48,7 +48,7 @@ class DataImport:
                 if entry_header == "Date" and not isinstance(entry, datetime):
                     entry = datetime.strptime(entry, date_format)
                 elif entry_header == "Amount":
-                    entry = Decimal(entry)
+                    entry = Decimal(entry) + Decimal("0.00")
                 data_row[entry_header] = entry
                 entry_count += 1
             except (decimal.DecimalException, ValueError):

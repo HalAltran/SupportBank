@@ -1,10 +1,12 @@
 import supportBank.Transaction as Transaction
 
+from decimal import Decimal
+
 
 class Account:
     def __init__(self, name: str):
         self.name = name
-        self.balance = 0
+        self.balance = Decimal("0.00")
         self.transactions = []
 
     def add_transaction_from(self, transaction: Transaction):
@@ -16,10 +18,13 @@ class Account:
         self.balance += transaction.amount
 
     def list_all_format(self):
-        return "Name: " + self.name + ". Balance: " + str(self.balance)
+        minus = ""
+        if self.balance < 0:
+            minus = "- "
+        return "Name: %s. Balance: %s£%s." % (self.name, minus, str(self.balance.copy_abs()))
 
     def print_account_transactions(self):
-        print(self.name + " transactions:")
+        print("%s's transactions:" % self.name)
         for transaction in self.transactions:
             transaction.print_info()
 

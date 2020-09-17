@@ -9,14 +9,5 @@ INFO:root:Bank has parsed .json Data from: "../res/Transactions2013.json". 0 row
 INFO:root:Bank is parsing .xml Data from: "../res/Transactions2012.xml".
 INFO:root:Bank has parsed .xml Data from: "../res/Transactions2012.xml". 0 rows were rejected.
 INFO:root:User performed the following command: "List All".
-INFO:root:User performed the following command: "List [Dan W]".
-INFO:root:User performed the following command: "List dk".
-WARNING:root:User attempted to perform command: "List dk" which is not valid.
-INFO:root:User performed the following command: "List [aa]".
-INFO:root:User attempted to list information for account: "aa" which does not exist
-INFO:root:User performed the following command: "List all".
-WARNING:root:User attempted to perform command: "List all" which is not valid.
-INFO:root:User performed the following command: "List Alll".
-WARNING:root:User attempted to perform command: "List Alll" which is not valid.
 INFO:root:User performed the following command: "end".
 INFO:root:Bank has closed for the day.

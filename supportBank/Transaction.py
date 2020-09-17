@@ -13,7 +13,7 @@ class Transaction:
         self.amount = amount
 
     def print_info(self):
-        print("Date: %s. From %s. To %s. Narrative: %s. Amount: %s" % (self.list_values()))
+        print("Date: %s. From %s. To %s. Narrative: %s. Amount: £%s." % (self.list_values()))
 
     def list_values(self):
         return self.date.strftime("%d/%m/%Y"), self.account_from.name, self.account_to.name, self.narrative,\
