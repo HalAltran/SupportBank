@@ -9,12 +9,14 @@ from datetime import datetime
 from decimal import Decimal
 from xml.etree import ElementTree
 
+from supportBank import Bank
+
 
 class DataImport:
     def __init__(self, file_path: str):
-        self.file_path = file_path
+        self.file_path = "../input/%s" % file_path
         self.rows = []
-        self.headers = {0: "Date", 1: "From", 2: "To", 3: "Narrative", 4: "Amount"}
+        self.headers = Bank.COLUMN_HEADERS
         self.error_count = 0
         logging.basicConfig(filename='../log/SupportBank.log', filemode='w', level=logging.DEBUG)
         self.file_ext = os.path.splitext(file_path)[1]
@@ -45,15 +47,15 @@ class DataImport:
         for entry in row:
             entry_header = self.headers[entry_count]
             try:
-                if entry_header == "Date" and not isinstance(entry, datetime):
+                if entry_header == Bank.DATE_COLUMN_HEADER and not isinstance(entry, datetime):
                     entry = datetime.strptime(entry, date_format)
-                elif entry_header == "Amount":
+                elif entry_header == Bank.AMOUNT_COLUMN_HEADER:
                     entry = Decimal(entry) + Decimal("0.00")
                 data_row[entry_header] = entry
                 entry_count += 1
             except (decimal.DecimalException, ValueError):
-                logging.warning("Row: %d contains an invalid \"%s\" and could not be parsed." % (row_count,
-                                                                                                 entry_header))
+                log_data = (row_count, entry_header, entry)
+                logging.warning("Row: %d contains an invalid \"%s: %s\" and could not be parsed." % log_data)
                 self.error_count += 1
                 return
         self.rows.append(data_row)
@@ -80,12 +82,12 @@ class DataImport:
             row_count += 1
 
     def get_xml_transaction_dict(self, support_transaction):
-        transaction_dict = {"Date": self.format_xml_date(support_transaction.attrib["Date"])}
+        transaction_dict = {Bank.DATE_COLUMN_HEADER: self.format_xml_date(support_transaction.attrib["Date"])}
         for attribute in support_transaction:
             if attribute.tag == "Description":
-                transaction_dict["Narrative"] = attribute.text
+                transaction_dict[Bank.NARRATIVE_COLUMN_HEADER] = attribute.text
             elif attribute.tag == "Value":
-                transaction_dict["Amount"] = attribute.text
+                transaction_dict[Bank.AMOUNT_COLUMN_HEADER] = attribute.text
             elif attribute.tag == "Parties":
                 for member in attribute:
                     transaction_dict[member.tag] = member.text

@@ -7,6 +7,15 @@ from supportBank.Account import Account
 from supportBank.Transaction import Transaction
 
 
+DATE_COLUMN_HEADER = "Date"
+FROM_COLUMN_HEADER = "From"
+TO_COLUMN_HEADER = "To"
+NARRATIVE_COLUMN_HEADER = "Narrative"
+AMOUNT_COLUMN_HEADER = "Amount"
+COLUMN_HEADERS = {0: DATE_COLUMN_HEADER, 1: FROM_COLUMN_HEADER, 2: TO_COLUMN_HEADER, 3: NARRATIVE_COLUMN_HEADER,
+                  4: AMOUNT_COLUMN_HEADER}
+
+
 class Bank:
     def __init__(self):
         self.accounts = {}
@@ -14,18 +23,18 @@ class Bank:
         logging.basicConfig(filename='../log/SupportBank.log', filemode='w', level=logging.DEBUG)
 
     def run(self):
-        self.import_data(DataImport("../res/Transactions2014.csv"))
-        self.import_data(DataImport("../res/DodgyTransactions2015.csv"))
-        self.import_data(DataImport("../res/Transactions2013.json"))
-        self.import_data(DataImport("../res/Transactions2012.xml"))
+        self.import_data(DataImport("Transactions2014.csv"))
+        self.import_data(DataImport("DodgyTransactions2015.csv"))
+        self.import_data(DataImport("Transactions2013.json"))
+        self.import_data(DataImport("Transactions2012.xml"))
         while self.bank_open:
             user_command = input("Type command: ")
             self.do_user_command(user_command)
 
     def import_data(self, data: DataImport):
         for row in data.rows:
-            self.create_account_if_name_does_not_exist(row["From"])
-            self.create_account_if_name_does_not_exist(row["To"])
+            self.create_account_if_name_does_not_exist(row[FROM_COLUMN_HEADER])
+            self.create_account_if_name_does_not_exist(row[TO_COLUMN_HEADER])
         row_count = 2
         for row in data.rows:
             self.create_transaction(row)
@@ -38,7 +47,7 @@ class Bank:
 
     def create_transaction(self, row):
         account_from = self.accounts[row["From"]]
-        account_to = self.accounts[row["To"]]
+        account_to = self.accounts[row[TO_COLUMN_HEADER]]
         transaction = Transaction(row["Date"], account_from, account_to, row["Narrative"], row["Amount"])
         account_from.add_transaction_from(transaction)
         account_to.add_transaction_to(transaction)
@@ -113,13 +122,14 @@ class Bank:
 
     def write_to_file(self, command):
         file_path = re.sub(r"Export File \[", "", command)
-        file_path = "../output/" + re.sub(r"\]", "", file_path)
+        file_path = "../output/%s" % re.sub(r"\]", "", file_path)
         logging.info("Exporting data to \"%s\"." % file_path)
         transactions = self.get_all_transactions()
         try:
             with open(file_path, "w", newline='') as output_file:
                 writer = csv.writer(output_file, delimiter=',')
-                writer.writerow(["Date", "From", "To", "Narrative", "Amount"])
+                # writer.writerow(["Date", "From", TO_COLUMN_HEADER, "Narrative", "Amount"])
+                writer.writerow(COLUMN_HEADERS.values())
                 for transaction in transactions:
                     writer.writerow(transaction.list_values())
         except IOError:
