@@ -12,6 +12,9 @@ from xml.etree import ElementTree
 from supportBank import Bank
 
 
+DEFAULT_DATE_FORMAT = "%d/%m/%Y"
+
+
 class DataImport:
     def __init__(self, file_path: str):
         self.file_path = "../input/%s" % file_path
@@ -38,7 +41,7 @@ class DataImport:
             row_count = 1
             self.error_count = 0
             for row in csv_reader:
-                self.create_row(row, row_count, "%d/%m/%Y")
+                self.create_row(row, row_count, DEFAULT_DATE_FORMAT)
                 row_count += 1
 
     def create_row(self, row, row_count, date_format):
@@ -78,7 +81,7 @@ class DataImport:
         for support_transaction in transaction_list:
             row_dict = self.get_xml_transaction_dict(support_transaction)
             row_list = self.get_row_list_from_row_dict(row_dict)
-            self.create_row(row_list, row_count, "%d/%m/%Y")
+            self.create_row(row_list, row_count, DEFAULT_DATE_FORMAT)
             row_count += 1
 
     def get_xml_transaction_dict(self, support_transaction):
@@ -101,5 +104,5 @@ class DataImport:
 
     @staticmethod
     def format_xml_date(xml_date):
-        base_date = datetime.strptime("01/01/1900", "%d/%m/%Y")
+        base_date = datetime.strptime("01/01/1900", DEFAULT_DATE_FORMAT)
         return base_date + timedelta(days=int(xml_date))
