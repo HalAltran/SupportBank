@@ -46,9 +46,10 @@ class Bank:
             self.accounts[name] = Account(name)
 
     def create_transaction(self, row):
-        account_from = self.accounts[row["From"]]
+        account_from = self.accounts[row[FROM_COLUMN_HEADER]]
         account_to = self.accounts[row[TO_COLUMN_HEADER]]
-        transaction = Transaction(row["Date"], account_from, account_to, row["Narrative"], row["Amount"])
+        transaction = Transaction(row[DATE_COLUMN_HEADER], account_from, account_to, row[NARRATIVE_COLUMN_HEADER],
+                                  row[AMOUNT_COLUMN_HEADER])
         account_from.add_transaction_from(transaction)
         account_to.add_transaction_to(transaction)
 

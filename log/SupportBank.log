@@ -8,8 +8,5 @@ INFO:root:Bank is parsing .json Data from: "../input/Transactions2013.json".
 INFO:root:Bank has parsed .json Data from: "../input/Transactions2013.json". 0 rows were rejected.
 INFO:root:Bank is parsing .xml Data from: "../input/Transactions2012.xml".
 INFO:root:Bank has parsed .xml Data from: "../input/Transactions2012.xml". 0 rows were rejected.
-INFO:root:User performed the following command: "List [Dan W]".
-INFO:root:User performed the following command: "List All".
-INFO:root:User performed the following command: "Export File [transactions.csv]".
-INFO:root:Exporting data to "../output/transactions.csv".
-INFO:root:Data exported to "../output/transactions.csv" successfully.
+INFO:root:User performed the following command: "end".
+INFO:root:Bank has closed for the day.
