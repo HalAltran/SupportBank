@@ -128,7 +128,6 @@ class Bank:
         try:
             with open(file_path, "w", newline='') as output_file:
                 writer = csv.writer(output_file, delimiter=',')
-                # writer.writerow(["Date", "From", TO_COLUMN_HEADER, "Narrative", "Amount"])
                 writer.writerow(COLUMN_HEADERS.values())
                 for transaction in transactions:
                     writer.writerow(transaction.list_values())
