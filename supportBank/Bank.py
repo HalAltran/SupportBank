@@ -61,7 +61,7 @@ class Bank:
         return sorted(transactions, key=lambda transaction: transaction.date)
 
     def do_user_command(self, command: str):
-        logging.info("User performed the following command: \"%s\"" % command)
+        logging.info("User performed the following command: \"%s\"." % command)
         if command == "List All":
             self.list_all()
         elif self.is_list_account_command(command):
@@ -100,20 +100,21 @@ class Bank:
     def import_file(self, command):
         file_path = re.sub(r"Import File \[", "", command)
         file_path = re.sub(r"\]", "", file_path)
-        logging.info("Importing data from \"%s\"" % file_path)
+        logging.info("Importing data from \"%s\"." % file_path)
         try:
-            self.import_data(DataImport(file_path))
-        except:
-            logging.warning("Could not import data from \"%s\"" % file_path)
-            print("Could not import data from \"%s\"" % file_path)
+            data_import = DataImport(file_path)
+        except (IOError, KeyError):
+            logging.warning("Could not import data from \"%s\"." % file_path)
+            print("Could not import data from \"%s\"." % file_path)
             return
+        self.import_data(data_import)
         logging.info("Data imported from \"%s\" successfully." % file_path)
         print("Data imported successfully.")
 
     def write_to_file(self, command):
         file_path = re.sub(r"Export File \[", "", command)
         file_path = "../output/" + re.sub(r"\]", "", file_path)
-        logging.info("Exporting data to \"%s\"" % file_path)
+        logging.info("Exporting data to \"%s\"." % file_path)
         transactions = self.get_all_transactions()
         try:
             with open(file_path, "w", newline='') as output_file:
@@ -121,9 +122,9 @@ class Bank:
                 writer.writerow(["Date", "From", "To", "Narrative", "Amount"])
                 for transaction in transactions:
                     writer.writerow(transaction.list_values())
-        except:
-            logging.warning("Could not export data to \"%s\"" % file_path)
-            print("Could not export data to \"%s\"" % file_path)
+        except IOError:
+            logging.warning("Could not export data to \"%s\"." % file_path)
+            print("Could not export data to \"%s\"." % file_path)
             return
         logging.info("Data exported to \"%s\" successfully." % file_path)
         print("Data exported successfully.")

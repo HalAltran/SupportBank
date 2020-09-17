@@ -2,6 +2,7 @@ import csv
 import logging
 import json
 import os
+import decimal
 
 from datetime import timedelta
 from datetime import datetime
@@ -50,7 +51,7 @@ class DataImport:
                     entry = Decimal(entry)
                 data_row[entry_header] = entry
                 entry_count += 1
-            except:
+            except (decimal.DecimalException, ValueError):
                 logging.warning("Row: %d contains an invalid \"%s\" and could not be parsed." % (row_count,
                                                                                                  entry_header))
                 self.error_count += 1
@@ -63,8 +64,8 @@ class DataImport:
             self.error_count = 0
             row_count = 0
             for row in json_data:
-                self.create_row([row["date"], row["fromAccount"], row["toAccount"], row["narrative"], str(row["amount"])],
-                                row_count, "%Y-%m-%d")
+                self.create_row([row["date"], row["fromAccount"], row["toAccount"], row["narrative"],
+                                 str(row["amount"])], row_count, "%Y-%m-%d")
                 row_count += 1
 
     def parse_xml(self):
